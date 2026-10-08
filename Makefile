@@ -1,4 +1,4 @@
-.PHONY: dev down build test lint format seed migrate smoke
+.PHONY: dev down build test lint format seed migrate smoke badge
 
 dev:
 	docker compose up --build
@@ -28,3 +28,6 @@ migrate:
 
 smoke:
 	bash .github/scripts/smoke.sh
+
+badge:
+	cd backend && python -m pytest --cov=app --cov-report=json -q && python ../scripts/make_badge.py coverage.json ../docs/coverage-badge.svg
