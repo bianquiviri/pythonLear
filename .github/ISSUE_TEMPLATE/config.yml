@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: API documentation (Swagger)
+    url: http://localhost:8000/docs
+    about: Interactive OpenAPI docs served by the backend
+  - name: Project rules for AI agents
+    url: https://github.com/bianquiviri/pythonLear/blob/main/AGENTS.md
+    about: Read AGENTS.md and docs/agents/ before opening an issue for agent work
