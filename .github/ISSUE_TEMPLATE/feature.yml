@@ -1,0 +1,40 @@
+name: Feature request
+description: New functionality
+title: "[feature] "
+labels: ["enhancement"]
+body:
+  - type: dropdown
+    id: agent
+    attributes:
+      label: Owning agent
+      options:
+        - backend
+        - frontend
+        - sre
+        - security
+        - qa
+    validations:
+      required: true
+  - type: textarea
+    id: user-story
+    attributes:
+      label: User story
+      description: "As a ... I want ... so that ..."
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Given/When/Then or bullet list. Must be testable.
+    validations:
+      required: true
+  - type: checkboxes
+    id: standards
+    attributes:
+      label: Standards
+      options:
+        - label: Follows hexagonal architecture (backend) or Nuxt conventions (frontend)
+        - label: KISS — no premature abstraction
+        - label: Swagger/OpenAPI updated if API changes
+        - label: Secrets go in .env, never in code
