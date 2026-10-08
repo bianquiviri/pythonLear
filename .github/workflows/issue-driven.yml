@@ -1,0 +1,78 @@
+name: Issue-driven automation
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  qa-run:
+    name: QA — full test suite
+    if: github.event.label.name == 'qa-run'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Backend
+        working-directory: backend
+        run: |
+          pip install -r requirements-dev.txt
+          ruff check .
+          mypy app
+          pytest --cov=app
+      - name: Frontend
+        working-directory: frontend
+        run: |
+          npm install
+          npm run lint
+          npm test
+
+  security-scan:
+    name: Security — dependency and secret scan
+    if: github.event.label.name == 'security-scan'
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pypa/gh-action-pip-audit@v1.1.0
+        with:
+          inputs: backend/requirements.txt
+      - name: Frontend audit
+        working-directory: frontend
+        run: npm install --ignore-scripts && npm audit --audit-level=high
+      - name: Trivy filesystem scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          format: table
+
+  sre-readiness:
+    name: SRE — image and health checks
+    if: github.event.label.name == 'sre-check'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build backend and check health endpoint
+        run: |
+          docker build -t spa-backend:ci backend
+          docker run -d --name backend -p 8000:8000 \
+            -e ENVIRONMENT=test \
+            -e DATABASE_URL=sqlite+aiosqlite:////tmp/test.db \
+            -e JWT_SECRET=ci-secret spa-backend:ci
+          sleep 15
+          curl -fsS http://localhost:8000/health
+          curl -fsS http://localhost:8000/openapi.json > /dev/null
+          docker logs backend
+          docker rm -f backend
